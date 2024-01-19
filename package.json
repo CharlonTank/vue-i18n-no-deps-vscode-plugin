@@ -1,0 +1,62 @@
+{
+  "name": "i18n-charlon",
+  "displayName": "i18n-charlon",
+  "description": "Speed up your translation process with i18n-charlon",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "i18n-charlon.openSettings",
+        "title": "Open My Extension Settings"
+      },
+      {
+        "command": "i18n-charlon.addTranslation",
+        "title": "Add Translation"
+      }
+    ],
+    "configuration": {
+      "title": "My Extension Configuration",
+      "properties": {
+        "myExtension.translationFilePath": {
+          "type": "string",
+          "default": "chrome-extension/src/utils/i18n.ts",
+          "description": "Path to the translation file (e.g., src/utils/i18n.ts)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.56.0",
+    "openai": "^4.24.7",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
