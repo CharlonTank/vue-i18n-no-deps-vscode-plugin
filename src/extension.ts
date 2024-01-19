@@ -19,9 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('workbench.action.openSettings', 'myExtension');
 	});
 	context.subscriptions.push(openSettingsDisposable);
-
 	let addTranslationDisposable = vscode.commands.registerTextEditorCommand('i18n-charlon.addTranslation', async (textEditor, edit) => {
-		const selections = textEditor.selections;
+		const selections = Array.from(textEditor.selections);
+		selections.sort((a, b) => a.start.isBefore(b.start) ? 1 : -1);
+
 		let apiKey = context.globalState.get<string>('gptApiKey');
 		if (!apiKey) {
 			vscode.window.showWarningMessage('i18n-charlon: GPT API Key is not set. Please set it in the extension settings.');
@@ -39,7 +40,6 @@ export function activate(context: vscode.ExtensionContext) {
 		for (const selection of selections) {
 			const selectedText = textEditor.document.getText(selection).trim();
 			const documentText = textEditor.document.getText();
-			const languageId = textEditor.document.languageId;
 
 			if (!selectedText) {
 				vscode.window.showWarningMessage('i18n-charlon: No text selected.');
@@ -78,17 +78,16 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			} catch (error) {
-				vscode.window.showErrorMessage(`Error getting translations: ${error}`);
+				vscode.window.showErrorMessage(`i18n-charlon: Error getting translations: ${error}`);
 			}
 		}
 	});
 
 	context.subscriptions.push(addTranslationDisposable);
 
-
 	let workspaceFolder = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.fsPath;
 	if (!workspaceFolder) {
-		vscode.window.showErrorMessage("Please open a workspace or folder.");
+		vscode.window.showErrorMessage("i18n-charlon: Please open a workspace or folder.");
 		return;
 	}
 
@@ -152,15 +151,15 @@ async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ c
 		return obj;
 	} catch (error) {
 		if (error instanceof OpenAI.APIConnectionError) {
-			vscode.window.showErrorMessage('Network connection error. Please check your internet connection.');
+			vscode.window.showErrorMessage('i18n-charlon: Network connection error. Please check your internet connection.');
 		} else if (error instanceof OpenAI.RateLimitError) {
-			vscode.window.showErrorMessage('Rate limit exceeded. Please try again later.');
+			vscode.window.showErrorMessage('i18n-charlon: Rate limit exceeded. Please try again later.');
 		} else if (error instanceof OpenAI.AuthenticationError) {
-			vscode.window.showErrorMessage('Authentication failed. Please check your API key.');
+			vscode.window.showErrorMessage('i18n-charlon: Authentication failed. Please check your API key.');
 		} else if (error instanceof OpenAI.APIError) {
-			vscode.window.showErrorMessage('An API error occurred: ' + error.message);
+			vscode.window.showErrorMessage('i18n-charlon: An API error occurred: ' + error.message);
 		} else {
-			vscode.window.showErrorMessage('unknown error occurred');
+			vscode.window.showErrorMessage('i18n-charlon: unknown error occurred');
 		}
 
 		throw error;
@@ -175,7 +174,7 @@ function promptForApiKey(context: vscode.ExtensionContext) {
 	}).then(value => {
 		if (value) {
 			context.globalState.update('gptApiKey', value);
-			vscode.window.showInformationMessage('API Key saved!');
+			vscode.window.showInformationMessage('i18n-charlon: API Key saved!');
 		}
 	});
 }
@@ -185,12 +184,12 @@ function validateTranslationFilePath(workspaceFolder: string, filePath: string) 
 	const absoluteFilePath = path.join(workspaceFolder, filePath);
 
 	if (!fs.existsSync(absoluteFilePath)) {
-		vscode.window.showErrorMessage(`Translation file not found at path: ${absoluteFilePath}`);
+		vscode.window.showErrorMessage(`i18n-charlon: Translation file not found at path: ${absoluteFilePath}`);
 		return false;
 	}
 
 	if (path.extname(absoluteFilePath) !== '.ts') {
-		vscode.window.showErrorMessage('The translation file must be a TypeScript (.ts) file.');
+		vscode.window.showErrorMessage('i18n-charlon: The translation file must be a TypeScript (.ts) file.');
 		return false;
 	}
 
@@ -202,7 +201,7 @@ export function deactivate() { }
 function modifyTranslationFile(filePath: string, newKey: string, newValueEn: string, newValueFr: string, translationType: string) {
 	fs.readFile(filePath, 'utf8', (err, data) => {
 		if (err) {
-			vscode.window.showErrorMessage(`Error reading file: ${err.message}`);
+			vscode.window.showErrorMessage(`i18n-charlon: Error reading file: ${err.message}`);
 			return;
 		}
 
@@ -215,9 +214,9 @@ function modifyTranslationFile(filePath: string, newKey: string, newValueEn: str
 
 		fs.writeFile(filePath, modifiedData, 'utf8', (err) => {
 			if (err) {
-				vscode.window.showErrorMessage(`Error writing file: ${err.message}`);
+				vscode.window.showErrorMessage(`i18n-charlon: Error writing file: ${err.message}`);
 			} else {
-				vscode.window.showInformationMessage('Translation file updated successfully.');
+				vscode.window.showInformationMessage('i18n-charlon: Translation file updated successfully.');
 			}
 		});
 	});

@@ -15,11 +15,11 @@
     "commands": [
       {
         "command": "i18n-charlon.openSettings",
-        "title": "Open My Extension Settings"
+        "title": "i18n-charlon: Open My Extension Settings"
       },
       {
         "command": "i18n-charlon.addTranslation",
-        "title": "Add Translation"
+        "title": "i18n-charlon: Add Translation"
       }
     ],
     "configuration": {
