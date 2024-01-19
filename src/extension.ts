@@ -47,14 +47,14 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			try {
-				let { camelizedKey, englishTranslation, frenchTranslation } = await getTranslationsFromGPT(apiKey, selectedText);
+				let { camelizedKey, englishTranslation, frenchTranslation, translationType, camelCaseCall } = await getTranslationsFromGPT(apiKey, selectedText);
 
-				modifyTranslationFile(translationFilePath, camelizedKey, englishTranslation, frenchTranslation);
+				modifyTranslationFile(translationFilePath, camelizedKey, englishTranslation, frenchTranslation, translationType);
 
 				await textEditor.edit(editBuilder => {
 					const selectedLineText = textEditor.document.lineAt(selection.start.line).text;
 					const isInTemplate = isTextInTemplate(documentText, selection.start.line);
-
+					const selectedTextReplacement = camelCaseCall || camelizedKey;
 					if (isInTemplate) {
 						if (isVueAttributeValue(selectedLineText, selectedText)) {
 							const attributeRegex = new RegExp(`([a-zA-Z-]+)="[^"]*${selectedText}[^"]*"`);
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 							if (fullAttributeMatch) {
 								const attributeName = fullAttributeMatch[1];
-								const replacementText = `:${attributeName}="t.${camelizedKey}"`;
+								const replacementText = `:${attributeName}="t.${selectedTextReplacement}"`;
 								const attributeStartIndex = selectedLineText.indexOf(fullAttributeMatch[0]);
 								const rangeToReplace = new vscode.Range(
 									new vscode.Position(selection.start.line, attributeStartIndex),
@@ -71,10 +71,10 @@ export function activate(context: vscode.ExtensionContext) {
 								editBuilder.replace(rangeToReplace, replacementText);
 							}
 						} else {
-							editBuilder.replace(selection, `{{ t.${camelizedKey} }}`);
+							editBuilder.replace(selection, `{{ t.${selectedTextReplacement} }}`);
 						}
 					} else {
-						editBuilder.replace(selection, `this.t.${camelizedKey}`);
+						editBuilder.replace(selection, `this.t.${selectedTextReplacement}`);
 					}
 				});
 			} catch (error) {
@@ -101,30 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 }
 
-
-
 function isVueAttributeValue(lineText: string, selectedText: string): boolean {
 	const regexPattern = new RegExp(`[a-zA-Z-]+=".*?${selectedText}.*?"`);
 	return regexPattern.test(lineText);
 }
 
-
-function extractVueAttributeName(lineText: string, selectedText: string): string | null {
-	const vueAttributeRegex = new RegExp(`([a-zA-Z-]*)="${selectedText}"`);
-	const match = vueAttributeRegex.exec(lineText);
-	return match ? match[1] : null;
-}
-
-function getAttributeRange(lineText: string, attributeName: string | null, lineNum: number, document: vscode.TextDocument): vscode.Range {
-	const attributePattern = new RegExp(`${attributeName}="[^"]*"`);
-	const match = attributePattern.exec(lineText);
-	if (match) {
-		const start = new vscode.Position(lineNum, match.index);
-		const end = new vscode.Position(lineNum, match.index + match[0].length);
-		return new vscode.Range(start, end);
-	}
-	return new vscode.Range(new vscode.Position(lineNum, 0), new vscode.Position(lineNum, 0));
-}
 function isTextInTemplate(documentText: string, selectedLine: number): boolean {
 	const lines = documentText.split(EOL);
 	let inTemplate = false;
@@ -144,7 +125,7 @@ function isTextInTemplate(documentText: string, selectedLine: number): boolean {
 	return inTemplate;
 }
 
-async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ camelizedKey: string, englishTranslation: string, frenchTranslation: string }> {
+async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ camelizedKey: string, englishTranslation: string, frenchTranslation: string, translationType: string, camelCaseCall: string | null }> {
 	const openai = new OpenAI({
 		apiKey: apiKey
 	});
@@ -152,11 +133,11 @@ async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ c
 	try {
 		const response = await openai.chat.completions.create({
 			model: "gpt-4-1106-preview",
-			response_format: { "type": "json_object" }, // Enable JSON mode
+			response_format: { "type": "json_object" },
 			messages: [
 				{
 					role: "system",
-					content: "Translate the given text into English and French, and provide a camelCase version of the English translation. Return the response in JSON : { camelizedKey: string, englishTranslation: string, frenchTranslation: string }."
+					content: "Translate the given text into English and French. Provide a camelCase key, the translations (e.g., if type is string then \"\"Current subscription\"\" and if type is (n: number) => string then \"(n) => `Current subscription number %{n}`\", the type of translation (e.g., string, (n: number) => string), (s: string) => string), and the camelCaseCall (e.g., myCamelCaseFunction(param1) or null if there is no params). Return the response in JSON format: { camelizedKey: string, englishTranslation: string, frenchTranslation: string, translationType: string, camelCaseCall: string | null}."
 				},
 				{
 					role: "user",
@@ -168,8 +149,7 @@ async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ c
 		console.log(response.choices[0].message.content);
 
 		const obj = response.choices[0].message.content ? JSON.parse(response.choices[0].message.content) : null;
-		return obj
-			;
+		return obj;
 	} catch (error) {
 		if (error instanceof OpenAI.APIConnectionError) {
 			vscode.window.showErrorMessage('Network connection error. Please check your internet connection.');
@@ -186,7 +166,6 @@ async function getTranslationsFromGPT(apiKey: string, text: string): Promise<{ c
 		throw error;
 	}
 }
-
 
 function promptForApiKey(context: vscode.ExtensionContext) {
 	vscode.window.showInputBox({
@@ -220,7 +199,7 @@ function validateTranslationFilePath(workspaceFolder: string, filePath: string) 
 
 export function deactivate() { }
 
-function modifyTranslationFile(filePath: string, newKey: string, newValueEn: string, newValueFr: string) {
+function modifyTranslationFile(filePath: string, newKey: string, newValueEn: string, newValueFr: string, translationType: string) {
 	fs.readFile(filePath, 'utf8', (err, data) => {
 		if (err) {
 			vscode.window.showErrorMessage(`Error reading file: ${err.message}`);
@@ -232,7 +211,7 @@ function modifyTranslationFile(filePath: string, newKey: string, newValueEn: str
 			return;
 		}
 
-		let modifiedData = addTranslationInAlphabeticalOrder(data, newKey, newValueEn, newValueFr);
+		let modifiedData = addTranslationInAlphabeticalOrder(data, newKey, newValueEn, newValueFr, translationType);
 
 		fs.writeFile(filePath, modifiedData, 'utf8', (err) => {
 			if (err) {
@@ -248,9 +227,7 @@ function isKeyPresent(data: string, key: string): boolean {
 	return data.includes(` ${key}: `);
 }
 
-
-
-function addTranslationInAlphabeticalOrder(data: string, newKey: string, newValueEn: string, newValueFr: string): string {
+function addTranslationInAlphabeticalOrder(data: string, newKey: string, newValueEn: string, newValueFr: string, translationType: string): string {
 	let lines = data.split(EOL);
 
 	function insertInOrder(sectionIndex: number, key: string, value: string, isTypeSection = false) {
@@ -259,17 +236,26 @@ function addTranslationInAlphabeticalOrder(data: string, newKey: string, newValu
 			let insertIndex = sectionIndex + 1;
 			for (let i = sectionIndex + 1; i < sectionEndIndex; i++) {
 				let line = lines[i].trim();
-				let comparisonKey = isTypeSection ? line.split(':')[0].trim() : line.split(':')[0].trim();
+				let comparisonKey = line.split(':')[0].trim();
 				if (line.startsWith(key) || key < comparisonKey) {
 					insertIndex = i;
 					break;
 				}
 			}
-			let newLine = isTypeSection ? `    ${key}: NoParamString;` : `    ${key}: "${value}",`;
+
+			let newLine;
+			if (isTypeSection) {
+				newLine = `    ${key}: ${translationType};`;
+			} else if (translationType === 'string') {
+				newLine = `    ${key}: "${value}",`;
+			} else {
+				newLine = `    ${key}: ${value},`;
+			}
 			lines.splice(insertIndex, 0, newLine);
 		}
 	}
 
+	// Insert the new key and value in the Texts type, English and French texts
 	insertInOrder(lines.findIndex(line => line.includes('export type Texts = {')), newKey, '', true);
 	insertInOrder(lines.findIndex(line => line.includes('const texts_en: Texts = {')), newKey, newValueEn);
 	insertInOrder(lines.findIndex(line => line.includes('const texts_fr: Texts = {')), newKey, newValueFr);
