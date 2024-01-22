@@ -1,6 +1,6 @@
-# i18n-charlon README
+# vue-i18n-no-dep README
 
-Welcome to the i18n-charlon README! This document will provide you with all the necessary information to get started with the i18n-charlon extension for Visual Studio Code. This extension simplifies the process of internationalizing your application by allowing you to add translations directly from your editor.
+Welcome to the vue-i18n-no-dep README! This document will provide you with all the necessary information to get started with the vue-i18n-no-dep extension for Visual Studio Code. This extension simplifies the process of internationalizing your application by allowing you to add translations directly from your editor.
 
 ## Features
 
@@ -11,7 +11,7 @@ Welcome to the i18n-charlon README! This document will provide you with all the 
 
 ## Requirements
 
-To use i18n-charlon, you'll need:
+To use vue-i18n-no-dep, you'll need:
 
 - An active OpenAI GPT API key.
 - A project with a TypeScript-based translation file structure.
@@ -36,7 +36,7 @@ This extension contributes the following settings:
 
 3. **Fetching Translations**:
 
-   - Right-click and select "Add Translation" or use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and search for "i18n-charlon: Add Translation".
+   - Right-click and select "Add Translation" or use the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and search for "vue-i18n-no-dep: Add Translation".
    - The extension will fetch English and French translations and generate a camelCase key.
 
 4. **Inserting Translations**:
@@ -45,7 +45,7 @@ This extension contributes the following settings:
    - The translations are added to your project's translation file.
 
 5. **Accessing Settings**:
-   - You can access and modify the extension settings through the command palette by searching for "i18n-charlon: Open Settings".
+   - You can access and modify the extension settings through the command palette by searching for "vue-i18n-no-dep: Open Settings".
 
 ## Known Issues
 
@@ -55,8 +55,8 @@ Currently, the extension only supports English and French translations. More lan
 
 ### 1.0.0
 
-Initial release of i18n-charlon.
+Initial release of vue-i18n-no-dep.
 
 ---
 
-Enjoy using i18n-charlon to simplify your application's internationalization process! If you encounter any issues or have suggestions for improvement, please feel free to contribute to the project's repository or open an issue.
+Enjoy using vue-i18n-no-dep to simplify your application's internationalization process! If you encounter any issues or have suggestions for improvement, please feel free to contribute to the project's repository or open an issue.

@@ -1,8 +1,13 @@
 {
-  "name": "i18n-charlon",
-  "displayName": "i18n-charlon",
-  "description": "Speed up your translation process with i18n-charlon",
+  "name": "vue-i18n-no-deps",
+  "displayName": "Vue i18n no deps vscode plugin",
+  "description": "Select your hardcoded text and automatically internalise it",
   "version": "0.0.1",
+  "publisher": "CharlonTank",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CharlonTank/vue-i18n-no-deps-vscode-plugin"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -14,12 +19,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "i18n-charlon.openSettings",
-        "title": "i18n-charlon: Open My Extension Settings"
+        "command": "vue-i18n-no-dep.openSettings",
+        "title": "vue-i18n-no-dep: Open My Extension Settings"
       },
       {
-        "command": "i18n-charlon.addTranslation",
-        "title": "i18n-charlon: Add Translation"
+        "command": "vue-i18n-no-dep.addTranslation",
+        "title": "vue-i18n-no-dep: Add Translation"
       }
     ],
     "configuration": {
